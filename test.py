@@ -177,7 +177,7 @@ class PathFigure:
 
         path_visualization = PathVisualization(self.x, self.y, self.z)
         distribution_score = path_visualization.getDistribution()
-        ax.legend([f"Distribution Score: {distribution_score}"])
+        ax.legend([f"Distribution: {distribution_score}"])
 
         if mode == 'save':
             plt.savefig('pathFig.png')
