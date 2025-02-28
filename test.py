@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import datetime
 
-A = input("Input RPM data file path: ") 
+A = input("File path: ") 
 print(' ')
 
 try:
@@ -11,17 +12,22 @@ except FileNotFoundError:
     print(f"File not found: {A}")
     exit(1)
 
-datetime = []
+datetime_str = []
 x = []
 y = []
 z = []
 timestamp = []  
 
 for k in range(0, len(mainarray) - 4, 5):  
-    datetime.append(mainarray[k] + " " + mainarray[k + 1]) 
+    datetime_str.append(mainarray[k] + " " + mainarray[k + 1]) 
     x.append(float(mainarray[k + 2]))
     y.append(float(mainarray[k + 3]))
     z.append(float(mainarray[k + 4]))
+
+datetime_obj = [datetime.strptime(dt, '%H:%M:%S %m/%d/%Y') for dt in datetime_str]
+
+time_in_seconds = [(dt - datetime_obj[0]).total_seconds() for dt in datetime_obj]
+time_in_hours = [t / 3600 for t in time_in_seconds] 
 
 class PathVisualization:
     def __init__(self, x, y, z):
@@ -180,6 +186,73 @@ class PathFigure:
         else:
             plt.savefig('pathFig.png')
             plt.show()
+
+class AccelerometerDataProcessor:
+    def __init__(self, x, y, z, time_in_hours, startAnalysis, endAnalysis):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.time_in_hours = time_in_hours
+        self.maxSeg = len(x) - 1
+        self.startAnalysis = startAnalysis
+        self.endAnalysis = endAnalysis
+
+    def _getTimeAvg(self):
+        xTimeAvg = np.cumsum(self.x) / np.arange(1, len(self.x) + 1)
+        yTimeAvg = np.cumsum(self.y) / np.arange(1, len(self.y) + 1)
+        zTimeAvg = np.cumsum(self.z) / np.arange(1, len(self.z) + 1)
+        return xTimeAvg, yTimeAvg, zTimeAvg
+
+    def _getMagnitude(self, xTimeAvg, yTimeAvg, zTimeAvg):
+        magList = np.sqrt(xTimeAvg**2 + yTimeAvg**2 + zTimeAvg**2)
+        return magList
+
+    def _getMagSeg(self, magList):
+        startSeg = next(i for i, t in enumerate(self.time_in_hours) if t >= self.startAnalysis)
+        endSeg = next(i for i, t in enumerate(self.time_in_hours) if t >= self.endAnalysis)
+        avgMagFull = np.mean(magList)
+        avgMagAnalysis = np.mean(magList[startSeg:endSeg])
+        return avgMagFull, avgMagAnalysis
+
+    def createMagFig(self, mode='show', title=True):
+        xTimeAvg, yTimeAvg, zTimeAvg = self._getTimeAvg()
+        magList = self._getMagnitude(xTimeAvg, yTimeAvg, zTimeAvg)
+        avgMagFull, avgMagAnalysis = self._getMagSeg(magList)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        plt.yscale('log')
+
+        if title:
+            fig.suptitle("Magnitude vs. Time")
+
+        ax.plot(self.time_in_hours, magList, color='#0032A0', label="Average Magnitude: " + f"{avgMagFull:.3g}")
+
+        startSeg = next(i for i, t in enumerate(self.time_in_hours) if t >= self.startAnalysis)
+        endSeg = next(i for i, t in enumerate(self.time_in_hours) if t >= self.endAnalysis)
+
+        ax.axvline(x=self.startAnalysis, color='#E4002B', linestyle='--')
+        ax.axvline(x=self.endAnalysis, color='#E4002B', linestyle='--')
+
+        ax.plot(self.time_in_hours[startSeg:endSeg], magList[startSeg:endSeg], color='#E4002B', label="Average Magnitude (Analysis): " + f"{avgMagAnalysis:.3g}")
+
+        ax.legend()
+        ax.set_xlabel('Time (hours)')
+        ax.set_ylabel('Magnitude (g)')
+
+        if mode == 'save': 
+            plt.savefig('timeMagFig.png')
+        elif mode == 'show':
+            plt.show()
+        else:
+            plt.savefig('timeMagFig.png')
+            plt.show()
+
+startAnalysis = float(input("Enter the start time for analysis in hours: "))
+endAnalysis = float(input("Enter the end time for analysis in hours: "))
+
+processor = AccelerometerDataProcessor(x, y, z, time_in_hours, startAnalysis, endAnalysis)
+processor.createMagFig(mode='show')
 
 path_figure = PathFigure(x, y, z)
 path_figure.createPathFig(mode='show')
