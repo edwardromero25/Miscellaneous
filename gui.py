@@ -93,6 +93,23 @@ class GUI:
         self.endAnalysis_entry = tk.Entry(analysis_period_frame, font=font_style, width=10)
         self.endAnalysis_entry.pack(side=tk.LEFT)
 
+        self.analysis_frame_exp = tk.Frame(center_frame, padx=1, pady=1)
+        self.analysis_frame_exp.grid(row=0, column=4, padx=30) 
+        self.analysis_frame_exp.grid_remove() 
+
+        analysis_label_exp = tk.Label(self.analysis_frame_exp, text="Time Period of Analysis (hours)", font=category_font_style)
+        analysis_label_exp.pack()
+
+        analysis_period_frame_exp = tk.Frame(self.analysis_frame_exp)
+        analysis_period_frame_exp.pack()
+
+        self.startAnalysis_entry_exp = tk.Entry(analysis_period_frame_exp, font=font_style, width=10)
+        self.startAnalysis_entry_exp.pack(side=tk.LEFT)
+        hyphen_label_exp = tk.Label(analysis_period_frame_exp, text="-", font=font_style)
+        hyphen_label_exp.pack(side=tk.LEFT)
+        self.endAnalysis_entry_exp = tk.Entry(analysis_period_frame_exp, font=font_style, width=10)
+        self.endAnalysis_entry_exp.pack(side=tk.LEFT)
+
         self.submit_button = tk.Button(center_frame, text="Start", command=self.submit, font=font_style, bg="#0032A0", fg="white")
         self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
 
@@ -158,14 +175,16 @@ class GUI:
         self.operating_frame.grid()
         self.duration_frame.grid()
         self.analysis_frame.grid()
-        self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
+        self.analysis_frame_exp.grid_remove()
         self.accelerometer_frame.grid_remove()
+        self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
         self.clear_plots()
 
     def show_experimental_inputs(self):
         self.operating_frame.grid_remove()
         self.duration_frame.grid_remove()
         self.analysis_frame.grid_remove()
+        self.analysis_frame_exp.grid(row=0, column=2, padx=30)
         self.accelerometer_frame.grid(row=0, column=1, padx=30)
         self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
         self.clear_plots()
@@ -202,7 +221,7 @@ class GUI:
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
-    def process_experimental_data(self, mainarray):
+    def process_experimental_data(self, mainarray, startAnalysis, endAnalysis):
         datetime_str = []
         x = []
         y = []
@@ -219,9 +238,9 @@ class GUI:
         time_in_seconds = [(dt - datetime_obj[0]).total_seconds() for dt in datetime_obj]
         time_in_hours = [t / 3600 for t in time_in_seconds]
 
-        self.update_experimental_plots(x, y, z, time_in_hours)
+        self.update_experimental_plots(x, y, z, time_in_hours, startAnalysis, endAnalysis)
 
-    def update_experimental_plots(self, x, y, z, time_in_hours):
+    def update_experimental_plots(self, x, y, z, time_in_hours, startAnalysis, endAnalysis):
         rcParams['font.family'] = 'Calibri'
 
         self.ax.clear()
@@ -235,9 +254,19 @@ class GUI:
         avgMagFull = np.mean(magnitude)
 
         self.ax.plot(time_in_hours, magnitude, color='#0032A0', label="Average Magnitude: " + f"{avgMagFull:.3g}")
+
+        startSeg = next(i for i, t in enumerate(time_in_hours) if t >= startAnalysis)
+        endSeg = next(i for i, t in enumerate(time_in_hours) if t >= endAnalysis)
+
+        self.ax.axvline(x=startAnalysis, color='#E4002B', linestyle='--')
+        self.ax.axvline(x=endAnalysis, color='#E4002B', linestyle='--')
+
+        avgMagAnalysis = np.mean(magnitude[startSeg:endSeg])
+        self.ax.plot(time_in_hours[startSeg:endSeg], magnitude[startSeg:endSeg], color='#E4002B', label="Average Magnitude: " + f"{avgMagAnalysis:.3g}")
+
+        self.ax.legend()
         self.ax.set_xlabel('Time (hours)', labelpad=2)
         self.ax.set_ylabel('Magnitude (g)', labelpad=2)
-        self.ax.legend()
         self.canvas.draw()
 
         self.path_ax.clear()
@@ -280,7 +309,15 @@ class GUI:
                 disScore = analysis.getDistribution()
                 self.update_plot(analysis, magnitude, startAnalysis, endAnalysis, avgMagSeg, avgMagAnalysis, innerV, outerV, disScore, path_visualization)
             else:
-                self.process_experimental_data(self.experimental_data)
+                startAnalysis = float(self.startAnalysis_entry_exp.get())
+                endAnalysis = float(self.endAnalysis_entry_exp.get())
+
+                if startAnalysis < 0 or endAnalysis < 0:
+                    raise ValueError("Time values must be positive.")
+                if endAnalysis <= startAnalysis:
+                    raise ValueError("Upper bound for analysis period must be greater than the lower bound.")
+
+                self.process_experimental_data(self.experimental_data, startAnalysis, endAnalysis)
 
         except ValueError as ve:
             messagebox.showerror("Input Error", str(ve))
