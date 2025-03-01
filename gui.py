@@ -6,6 +6,7 @@ from dataCompile import PathVisualization
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
+from datetime import datetime
 
 class GUI:
     def __init__(self, master):
@@ -103,7 +104,7 @@ class GUI:
         accelerometer_label = tk.Label(self.accelerometer_frame, text="Accelerometer Data", font=category_font_style)
         accelerometer_label.pack()
 
-        self.import_button = tk.Button(self.accelerometer_frame, text="Import", command=self.import_data, font=font_style, bg="gainsboro")
+        self.import_button = tk.Button(self.accelerometer_frame, text="Upload CSV", command=self.import_data, font=font_style, bg="gainsboro")
         self.import_button.pack()
 
         plot_frame = tk.Frame(master, padx=5, pady=5)
@@ -195,34 +196,93 @@ class GUI:
     def import_data(self):
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
         if file_path:
-            messagebox.showinfo("Import Data", "CSV file imported successfully. Placeholder for data processing and plotting.")
+            try:
+                with open(file_path, 'r') as file:
+                    mainarray = file.read().replace("   ", " ").replace('\t', ' ').replace('\n', ' ').replace(',', ' ').split(' ')
+                self.experimental_data = mainarray
+                messagebox.showinfo("Success", "CSV file uploaded successfully.")
+            except FileNotFoundError:
+                messagebox.showerror("File Error", f"File not found: {file_path}")
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+    def process_experimental_data(self, mainarray):
+        datetime_str = []
+        x = []
+        y = []
+        z = []
+        timestamp = []
+
+        for k in range(0, len(mainarray) - 4, 5):
+            datetime_str.append(mainarray[k] + " " + mainarray[k + 1])
+            x.append(float(mainarray[k + 2]))
+            y.append(float(mainarray[k + 3]))
+            z.append(float(mainarray[k + 4]))
+
+        datetime_obj = [datetime.strptime(dt, '%H:%M:%S %m/%d/%Y') for dt in datetime_str]
+        time_in_seconds = [(dt - datetime_obj[0]).total_seconds() for dt in datetime_obj]
+        time_in_hours = [t / 3600 for t in time_in_seconds]
+
+        self.update_experimental_plots(x, y, z, time_in_hours)
+
+    def update_experimental_plots(self, x, y, z, time_in_hours):
+        rcParams['font.family'] = 'Calibri'
+
+        self.ax.clear()
+        self.ax.set_yscale('log')
+        self.ax.set_title("Magnitude vs. Time")
+
+        xTimeAvg = np.cumsum(x) / np.arange(1, len(x) + 1)
+        yTimeAvg = np.cumsum(y) / np.arange(1, len(y) + 1)
+        zTimeAvg = np.cumsum(z) / np.arange(1, len(z) + 1)
+        magnitude = np.sqrt(xTimeAvg**2 + yTimeAvg**2 + zTimeAvg**2)
+
+        self.ax.plot(time_in_hours, magnitude, color='#0032A0')
+        self.ax.set_xlabel('Time (hours)', labelpad=2)
+        self.ax.set_ylabel('Magnitude (g)', labelpad=2)
+        self.canvas.draw()
+
+        self.path_ax.clear()
+        self.path_ax.plot(x, y, z, color='#0032A0', linewidth=1)
+        self.path_ax.set_xlabel('X')
+        self.path_ax.set_ylabel('Y')
+        self.path_ax.set_zlabel('Z')
+        ticks = np.arange(-1.0, 1.5, 0.5)
+        self.path_ax.set_xticks(ticks)
+        self.path_ax.set_yticks(ticks)
+        self.path_ax.set_zticks(ticks)
+        self.path_ax.set_title("Acceleration Vector Path")
+        self.path_canvas.draw()
 
     def submit(self):
         try:
-            innerV = float(self.innerV_entry.get())
-            outerV = float(self.outerV_entry.get())
-            maxSeg = float(self.maxSeg_entry.get())
-            startAnalysis = float(self.startAnalysis_entry.get())
-            endAnalysis = float(self.endAnalysis_entry.get())
+            if self.mode_var.get() == "Theoretical":
+                innerV = float(self.innerV_entry.get())
+                outerV = float(self.outerV_entry.get())
+                maxSeg = float(self.maxSeg_entry.get())
+                startAnalysis = float(self.startAnalysis_entry.get())
+                endAnalysis = float(self.endAnalysis_entry.get())
 
-            if innerV <= 0 or outerV <= 0:
-                raise ValueError("Frame velocities must be positive.")
-            if startAnalysis < 0 or endAnalysis < 0 or maxSeg <= 0:
-                raise ValueError("Time values must be positive.")
-            if endAnalysis <= startAnalysis:
-                raise ValueError("Upper bound must be greater than the lower bound.")
-            if endAnalysis > maxSeg:
-                raise ValueError("Upper bound must be less than or equal to the simulation duration.")
-            if startAnalysis == endAnalysis:
-                raise ValueError("Upper and lower bounds must not be equal.")
+                if innerV <= 0 or outerV <= 0:
+                    raise ValueError("Frame velocities must be positive.")
+                if startAnalysis < 0 or endAnalysis < 0 or maxSeg <= 0:
+                    raise ValueError("Time values must be positive.")
+                if endAnalysis <= startAnalysis:
+                    raise ValueError("Upper bound must be greater than the lower bound.")
+                if endAnalysis > maxSeg:
+                    raise ValueError("Upper bound must be less than or equal to the simulation duration.")
+                if startAnalysis == endAnalysis:
+                    raise ValueError("Upper and lower bounds must not be equal.")
 
-            analysis = DataProcessor(innerV, outerV, maxSeg, startAnalysis, endAnalysis)
-            path_visualization = PathVisualization(innerV, analysis.x, analysis.y, analysis.z)
-            xTimeAvg, yTimeAvg, zTimeAvg = analysis._getTimeAvg()
-            magnitude = analysis._getMagnitude(xTimeAvg, yTimeAvg, zTimeAvg)
-            avgMagSeg, avgMagAnalysis = analysis._getMagSeg(magnitude)
-            disScore = analysis.getDistribution()
-            self.update_plot(analysis, magnitude, startAnalysis, endAnalysis, avgMagSeg, avgMagAnalysis, innerV, outerV, disScore, path_visualization)
+                analysis = DataProcessor(innerV, outerV, maxSeg, startAnalysis, endAnalysis)
+                path_visualization = PathVisualization(innerV, analysis.x, analysis.y, analysis.z)
+                xTimeAvg, yTimeAvg, zTimeAvg = analysis._getTimeAvg()
+                magnitude = analysis._getMagnitude(xTimeAvg, yTimeAvg, zTimeAvg)
+                avgMagSeg, avgMagAnalysis = analysis._getMagSeg(magnitude)
+                disScore = analysis.getDistribution()
+                self.update_plot(analysis, magnitude, startAnalysis, endAnalysis, avgMagSeg, avgMagAnalysis, innerV, outerV, disScore, path_visualization)
+            else:
+                self.process_experimental_data(self.experimental_data)
 
         except ValueError as ve:
             messagebox.showerror("Input Error", str(ve))
