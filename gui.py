@@ -96,6 +96,14 @@ class GUI:
         self.import_button.grid(row=1, column=0, columnspan=4, pady=1)
         self.import_button.grid_remove()
 
+        # New frame for Accelerometer Data
+        self.accelerometer_frame = tk.Frame(center_frame, padx=1, pady=1)
+        accelerometer_label = tk.Label(self.accelerometer_frame, text="Accelerometer Data", font=category_font_style)
+        accelerometer_label.pack()
+
+        self.import_button = tk.Button(self.accelerometer_frame, text="Import", command=self.import_data, font=font_style, bg="gainsboro")
+        self.import_button.pack()
+
         plot_frame = tk.Frame(master, padx=10, pady=10)
         plot_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
@@ -151,16 +159,16 @@ class GUI:
         self.operating_frame.grid()
         self.duration_frame.grid()
         self.analysis_frame.grid()
-        self.submit_button.grid()
-        self.import_button.grid_remove()
+        self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
+        self.accelerometer_frame.grid_remove()
         self.clear_plots()
 
     def show_experimental_inputs(self):
         self.operating_frame.grid_remove()
         self.duration_frame.grid_remove()
         self.analysis_frame.grid_remove()
-        self.submit_button.grid_remove()
-        self.import_button.grid()
+        self.accelerometer_frame.grid(row=0, column=1, padx=30)
+        self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
         self.clear_plots()
 
     def clear_plots(self):
