@@ -96,10 +96,6 @@ class GUI:
         self.submit_button = tk.Button(center_frame, text="Start", command=self.submit, font=font_style, bg="#0032A0", fg="white")
         self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
 
-        self.import_button = tk.Button(center_frame, text="Import Accelerometer Data", command=self.import_data, font=font_style, bg="#0032A0", fg="white")
-        self.import_button.grid(row=1, column=0, columnspan=4, pady=1)
-        self.import_button.grid_remove()
-
         self.accelerometer_frame = tk.Frame(center_frame, padx=1, pady=1)
         accelerometer_label = tk.Label(self.accelerometer_frame, text="Accelerometer Data", font=category_font_style)
         accelerometer_label.pack()
