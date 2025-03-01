@@ -236,10 +236,12 @@ class GUI:
         yTimeAvg = np.cumsum(y) / np.arange(1, len(y) + 1)
         zTimeAvg = np.cumsum(z) / np.arange(1, len(z) + 1)
         magnitude = np.sqrt(xTimeAvg**2 + yTimeAvg**2 + zTimeAvg**2)
+        avgMagFull = np.mean(magnitude)
 
-        self.ax.plot(time_in_hours, magnitude, color='#0032A0')
+        self.ax.plot(time_in_hours, magnitude, color='#0032A0', label="Average Magnitude: " + f"{avgMagFull:.3g}")
         self.ax.set_xlabel('Time (hours)', labelpad=2)
         self.ax.set_ylabel('Magnitude (g)', labelpad=2)
+        self.ax.legend()
         self.canvas.draw()
 
         self.path_ax.clear()
@@ -268,7 +270,7 @@ class GUI:
                 if startAnalysis < 0 or endAnalysis < 0 or maxSeg <= 0:
                     raise ValueError("Time values must be positive.")
                 if endAnalysis <= startAnalysis:
-                    raise ValueError("Upper bound must be greater than the lower bound.")
+                    raise ValueError("Upper bound for analysis period must be greater than the lower bound.")
                 if endAnalysis > maxSeg:
                     raise ValueError("Upper bound must be less than or equal to the simulation duration.")
                 if startAnalysis == endAnalysis:
