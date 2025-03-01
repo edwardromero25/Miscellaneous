@@ -10,7 +10,10 @@ import numpy as np
 class GUI:
     def __init__(self, master):
         self.master = master
-        master.title("Computer Model")
+        master.title("National Aeronautics and Space Administration")
+
+        self.favicon = tk.PhotoImage(file="images/favicon-40.png")
+        master.iconphoto(False, self.favicon)
 
         font_style = ("Calibri", 12)
         title_font_style = ("Calibri", 20, "bold")
@@ -96,7 +99,6 @@ class GUI:
         self.import_button.grid(row=1, column=0, columnspan=4, pady=1)
         self.import_button.grid_remove()
 
-        # New frame for Accelerometer Data
         self.accelerometer_frame = tk.Frame(center_frame, padx=1, pady=1)
         accelerometer_label = tk.Label(self.accelerometer_frame, text="Accelerometer Data", font=category_font_style)
         accelerometer_label.pack()
@@ -104,7 +106,7 @@ class GUI:
         self.import_button = tk.Button(self.accelerometer_frame, text="Import", command=self.import_data, font=font_style, bg="gainsboro")
         self.import_button.pack()
 
-        plot_frame = tk.Frame(master, padx=10, pady=10)
+        plot_frame = tk.Frame(master, padx=5, pady=5)
         plot_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
         self.magnitude_frame = tk.Frame(plot_frame, borderwidth=1, relief=tk.SOLID)
