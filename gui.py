@@ -137,16 +137,18 @@ class GUI:
         self.import_button.pack()
 
         plot_frame = tk.Frame(master, padx=5, pady=5)
-        plot_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=(5, 5), pady=(0, 5))
+        plot_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=(7, 5), pady=(0, 5))
 
         notebook = ttk.Notebook(plot_frame)
         notebook.pack(fill=tk.BOTH, expand=True)
 
         self.magnitude_frame = tk.Frame(notebook, borderwidth=1, relief=tk.SOLID)
+        self.vector_components_frame = tk.Frame(notebook, borderwidth=1, relief=tk.SOLID)
         self.path_frame = tk.Frame(notebook, borderwidth=1, relief=tk.SOLID)
 
-        notebook.add(self.magnitude_frame, text="Magnitude")
-        notebook.add(self.path_frame, text="Path")
+        notebook.add(self.magnitude_frame, text="Resultant Vector")
+        notebook.add(self.vector_components_frame, text="Vector Components")
+        notebook.add(self.path_frame, text="Vector Path")
 
         rcParams['font.family'] = 'Calibri'
 
