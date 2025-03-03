@@ -441,7 +441,7 @@ class GUI:
 
         self.components_ax.plot(time_in_hours, xTimeAvg, label='X-Component', color='#0032A0')
         self.components_ax.plot(time_in_hours, yTimeAvg, label='Y-Component', color='#E4002B')
-        self.components_ax.plot(time_in_hours, zTimeAvg, label='Z-Component', color='silver')
+        self.components_ax.plot(time_in_hours, zTimeAvg, label='Z-Component', color='gray')
         self.components_ax.set_xlabel('Time (hours)')
         self.components_ax.set_ylabel('Magnitude (g)')
 
@@ -459,7 +459,7 @@ class GUI:
 
         self.components_ax.plot(time_in_hours, xTimeAvg, label='X-Component', color='#0032A0')
         self.components_ax.plot(time_in_hours, yTimeAvg, label='Y-Component', color='#E4002B')
-        self.components_ax.plot(time_in_hours, zTimeAvg, label='Z-Component', color='silver')
+        self.components_ax.plot(time_in_hours, zTimeAvg, label='Z-Component', color='gray')
         self.components_ax.set_xlabel('Time (hours)')
         self.components_ax.set_ylabel('Magnitude (g)')
 
