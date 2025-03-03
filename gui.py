@@ -198,6 +198,8 @@ class GUI:
 
         self.clear_plots()
 
+        messagebox.showinfo("Welcome!", "This is a computer model that evaluates the efficacy of a 3D clinostat's microgravity simulation.")
+
     def create_custom_theme(self):
         myred = "#E4002B"
         style = ttk.Style()
