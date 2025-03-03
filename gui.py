@@ -182,6 +182,18 @@ class GUI:
         self.path_toolbar.update()
         self.path_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
+        self.components_figure = plt.Figure()
+        self.components_ax = self.components_figure.add_subplot(1, 1, 1)
+        self.components_ax.set_title("Magnitude vs. Time")
+        self.components_ax.set_xlabel('Time (hours)')
+        self.components_ax.set_ylabel('Magnitude (g)')
+        self.components_canvas = FigureCanvasTkAgg(self.components_figure, self.vector_components_frame)
+        self.components_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        self.components_toolbar = NavigationToolbar2Tk(self.components_canvas, self.vector_components_frame)
+        self.components_toolbar.update()
+        self.components_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
         self.clear_plots()
 
     def switch_mode(self, mode):
@@ -228,6 +240,12 @@ class GUI:
         self.path_ax.set_zticks(ticks)
         self.path_ax.set_title("Acceleration Vector Path")
         self.path_canvas.draw()
+
+        self.components_ax.clear()
+        self.components_ax.set_title("Magnitude vs. Time")
+        self.components_ax.set_xlabel('Time (hours)')
+        self.components_ax.set_ylabel('Magnitude (g)')
+        self.components_canvas.draw()
 
     def import_data(self):
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
@@ -306,6 +324,8 @@ class GUI:
         self.path_ax.legend([f"Distribution: {distribution_score}"])
 
         self.path_canvas.draw()
+
+        self.create_time_avg_fig(xTimeAvg, yTimeAvg, zTimeAvg, time_in_hours, mode='show')
 
     def submit(self):
         try:
@@ -392,6 +412,46 @@ class GUI:
         self.path_ax.legend([f"Distribution: {disScore}"])
 
         self.path_canvas.draw()
+
+        xTimeAvg, yTimeAvg, zTimeAvg = analysis._getTimeAvg()
+        self.create_time_avg_fig_theoretical(xTimeAvg, yTimeAvg, zTimeAvg, analysis.time, mode='show')
+
+    def create_time_avg_fig(self, xTimeAvg, yTimeAvg, zTimeAvg, time_in_hours, mode='save', legend=True, title=True):
+        self.components_ax.clear()
+        if title:
+            self.components_ax.set_title('Magnitude vs. Time')
+
+        self.components_ax.plot(time_in_hours, xTimeAvg, label='X-Component', color='#0032A0')
+        self.components_ax.plot(time_in_hours, yTimeAvg, label='Y-Component', color='#E4002B')
+        self.components_ax.plot(time_in_hours, zTimeAvg, label='Z-Component', color='silver')
+        self.components_ax.set_xlabel('Time (hours)')
+        self.components_ax.set_ylabel('Magnitude (g)')
+
+        if legend:
+            self.components_ax.legend()
+
+        self.components_canvas.draw()
+
+    def create_time_avg_fig_theoretical(self, xTimeAvg, yTimeAvg, zTimeAvg, time_in_seconds, mode='save', legend=True, title=True):
+        time_in_hours = [t / 3600 for t in time_in_seconds]
+
+        self.components_ax.clear()
+        if title:
+            self.components_ax.set_title('Magnitude vs. Time')
+
+        self.components_ax.plot(time_in_hours, xTimeAvg, label='X-Component', color='#0032A0')
+        self.components_ax.plot(time_in_hours, yTimeAvg, label='Y-Component', color='#E4002B')
+        self.components_ax.plot(time_in_hours, zTimeAvg, label='Z-Component', color='silver')
+        self.components_ax.set_xlabel('Time (hours)')
+        self.components_ax.set_ylabel('Magnitude (g)')
+
+        if legend:
+            self.components_ax.legend()
+
+        self.components_canvas.draw()
+
+    def format_time(self, time):
+        return time 
 
     def open_url(self, url):
         webbrowser.open_new(url)
