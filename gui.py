@@ -1,5 +1,9 @@
+# Author: Edward Romero, OSTEM Intern, Spring 2025, NASA Kennedy Space Center
+# This is a computer model that evaluates the efficacy of a 3D clinostat's microgravity simulation.
+
 import tkinter as tk
 from tkinter import messagebox, filedialog
+from tkinter import ttk 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from dataCompile import DataProcessor
 from dataCompile import PathVisualization
@@ -7,13 +11,23 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
 from datetime import datetime
+from PIL import Image, ImageTk
+import webbrowser
 
 class GUI:
     def __init__(self, master):
         self.master = master
-        master.title("National Aeronautics and Space Administration")
+        master.title("Computer Model for Microgravity Simulators - NASA")
 
-        self.favicon = tk.PhotoImage(file="images/favicon-40.png")
+        nasa_image = Image.open("images/NASA_logo.png")
+        nasa_image = nasa_image.resize((70, 58), Image.LANCZOS)
+        self.nasa_logo = ImageTk.PhotoImage(nasa_image)
+
+        mssf_image = Image.open("images/MSSF_logo.png")
+        mssf_image = mssf_image.resize((65, 58), Image.LANCZOS)
+        self.mssf_logo = ImageTk.PhotoImage(mssf_image)
+
+        self.favicon = ImageTk.PhotoImage(file="images/favicon.ico")
         master.iconphoto(False, self.favicon)
 
         font_style = ("Calibri", 12)
@@ -23,20 +37,19 @@ class GUI:
         input_frame = tk.Frame(master, padx=1, pady=1)
         input_frame.pack(side=tk.TOP, anchor=tk.CENTER)
 
-        self.nasa_logo = tk.PhotoImage(file="images/nasa_logo.png")
-        self.mssf_logo = tk.PhotoImage(file="images/mssf_logo.png")
-
         title_frame = tk.Frame(input_frame)
-        title_frame.pack(pady=(0, 1))
+        title_frame.pack(pady=(10, 0))
 
         nasa_label = tk.Label(title_frame, image=self.nasa_logo)
         nasa_label.pack(side=tk.LEFT, padx=1)
+        nasa_label.bind("<Button-1>", lambda e: self.open_url("https://www.nasa.gov/"))
 
         title_label = tk.Label(title_frame, text="Computer Model", font=title_font_style)
         title_label.pack(side=tk.LEFT, padx=1)
 
         mssf_label = tk.Label(title_frame, image=self.mssf_logo)
         mssf_label.pack(side=tk.LEFT, padx=1)
+        mssf_label.bind("<Button-1>", lambda e: self.open_url("https://public.ksc.nasa.gov/partnerships/capabilities-and-testing/testing-and-labs/microgravity-simulation-support-facility/"))
 
         center_frame = tk.Frame(input_frame)
         center_frame.pack()
@@ -55,15 +68,15 @@ class GUI:
         self.operating_frame = tk.Frame(center_frame, padx=1, pady=1)
         self.operating_frame.grid(row=0, column=1, padx=30)
 
-        operating_label = tk.Label(self.operating_frame, text="Operating Condition", font=category_font_style)
+        operating_label = tk.Label(self.operating_frame, text="Frame Velocities (rpm)", font=category_font_style)
         operating_label.pack()
 
-        self.innerV_label = tk.Label(self.operating_frame, text="Inner Frame Velocity (rpm):", font=font_style)
+        self.innerV_label = tk.Label(self.operating_frame, text="Inner:", font=font_style)
         self.innerV_label.pack(anchor=tk.W)
         self.innerV_entry = tk.Entry(self.operating_frame, font=font_style)
         self.innerV_entry.pack()
 
-        self.outerV_label = tk.Label(self.operating_frame, text="Outer Frame Velocity (rpm):", font=font_style)
+        self.outerV_label = tk.Label(self.operating_frame, text="Outer:", font=font_style)
         self.outerV_label.pack(anchor=tk.W)
         self.outerV_entry = tk.Entry(self.operating_frame, font=font_style)
         self.outerV_entry.pack()
@@ -110,8 +123,8 @@ class GUI:
         self.endAnalysis_entry_exp = tk.Entry(analysis_period_frame_exp, font=font_style, width=10)
         self.endAnalysis_entry_exp.pack(side=tk.LEFT)
 
-        self.submit_button = tk.Button(center_frame, text="Start", command=self.submit, font=font_style, bg="#0032A0", fg="white")
-        self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
+        self.submit_button = tk.Button(center_frame, text="Start", command=self.submit, font=font_style, bg="#E4002B", fg="white")
+        self.submit_button.grid(row=1, column=0, columnspan=4, pady=(10, 5))
 
         self.accelerometer_frame = tk.Frame(center_frame, padx=1, pady=1)
         accelerometer_label = tk.Label(self.accelerometer_frame, text="Accelerometer Data", font=category_font_style)
@@ -120,18 +133,16 @@ class GUI:
         self.import_button = tk.Button(self.accelerometer_frame, text="Upload CSV", command=self.import_data, font=font_style, bg="gainsboro")
         self.import_button.pack()
 
-        plot_frame = tk.Frame(master, padx=5, pady=5)
-        plot_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self.notebook = ttk.Notebook(master)
+        self.notebook.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=(5, 5), pady=(0, 5))
 
-        self.magnitude_frame = tk.Frame(plot_frame, borderwidth=1, relief=tk.SOLID)
-        self.magnitude_frame.grid(row=0, column=0, sticky="nsew")
+        self.magnitude_frame = tk.Frame(self.notebook, borderwidth=1, relief=tk.SOLID)
+        self.path_frame = tk.Frame(self.notebook, borderwidth=1, relief=tk.SOLID)
+        self.components_frame = tk.Frame(self.notebook, borderwidth=1, relief=tk.SOLID) 
 
-        self.path_frame = tk.Frame(plot_frame, borderwidth=1, relief=tk.SOLID)
-        self.path_frame.grid(row=0, column=1, sticky="nsew")
-
-        plot_frame.grid_columnconfigure(0, weight=1)
-        plot_frame.grid_columnconfigure(1, weight=1)
-        plot_frame.grid_rowconfigure(0, weight=1)
+        self.notebook.add(self.magnitude_frame, text="Magnitude")
+        self.notebook.add(self.path_frame, text="Path")
+        self.notebook.add(self.components_frame, text="Components") 
 
         rcParams['font.family'] = 'Calibri'
 
@@ -150,9 +161,9 @@ class GUI:
 
         self.path_figure = plt.Figure()
         self.path_ax = self.path_figure.add_subplot(1, 1, 1, projection='3d')
-        self.path_ax.set_xlabel('X')
-        self.path_ax.set_ylabel('Y')
-        self.path_ax.set_zlabel('Z')
+        self.path_ax.set_xlabel('X', labelpad=2)
+        self.path_ax.set_ylabel('Y', labelpad=2)
+        self.path_ax.set_zlabel('Z', labelpad=2)
         ticks = np.arange(-1.0, 1.5, 0.5)
         self.path_ax.set_xticks(ticks)
         self.path_ax.set_yticks(ticks)
@@ -164,6 +175,8 @@ class GUI:
         self.path_toolbar = NavigationToolbar2Tk(self.path_canvas, self.path_frame)
         self.path_toolbar.update()
         self.path_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        self.clear_plots()
 
     def switch_mode(self, mode):
         if mode == "Theoretical":
@@ -177,7 +190,7 @@ class GUI:
         self.analysis_frame.grid()
         self.analysis_frame_exp.grid_remove()
         self.accelerometer_frame.grid_remove()
-        self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
+        self.submit_button.grid(row=1, column=0, columnspan=4, pady=(10, 5))
         self.clear_plots()
 
     def show_experimental_inputs(self):
@@ -186,7 +199,7 @@ class GUI:
         self.analysis_frame.grid_remove()
         self.analysis_frame_exp.grid(row=0, column=2, padx=30)
         self.accelerometer_frame.grid(row=0, column=1, padx=30)
-        self.submit_button.grid(row=1, column=0, columnspan=4, pady=1)
+        self.submit_button.grid(row=1, column=0, columnspan=4, pady=(10, 5)) 
         self.clear_plots()
 
     def clear_plots(self):
@@ -195,12 +208,14 @@ class GUI:
         self.ax.set_title("Magnitude vs. Time")
         self.ax.set_xlabel('Time (hours)', labelpad=2)
         self.ax.set_ylabel('Magnitude (g)', labelpad=2)
+        self.ax.set_yticks([10**(-i) for i in range(0, 17, 2)])
+        self.ax.set_ylim(10**-17, 10**0) 
         self.canvas.draw()
 
         self.path_ax.clear()
-        self.path_ax.set_xlabel('X')
-        self.path_ax.set_ylabel('Y')
-        self.path_ax.set_zlabel('Z')
+        self.path_ax.set_xlabel('X', labelpad=2)
+        self.path_ax.set_ylabel('Y', labelpad=2)
+        self.path_ax.set_zlabel('Z', labelpad=2)
         ticks = np.arange(-1.0, 1.5, 0.5)
         self.path_ax.set_xticks(ticks)
         self.path_ax.set_yticks(ticks)
@@ -238,9 +253,12 @@ class GUI:
         time_in_seconds = [(dt - datetime_obj[0]).total_seconds() for dt in datetime_obj]
         time_in_hours = [t / 3600 for t in time_in_seconds]
 
-        self.update_experimental_plots(x, y, z, time_in_hours, startAnalysis, endAnalysis)
+        path_visualization = PathVisualization("experimental", x, y, z)
+        distribution_score = path_visualization.getDistribution()
 
-    def update_experimental_plots(self, x, y, z, time_in_hours, startAnalysis, endAnalysis):
+        self.update_experimental_plots(x, y, z, time_in_hours, startAnalysis, endAnalysis, distribution_score)
+
+    def update_experimental_plots(self, x, y, z, time_in_hours, startAnalysis, endAnalysis, distribution_score):
         rcParams['font.family'] = 'Calibri'
 
         self.ax.clear()
@@ -271,19 +289,24 @@ class GUI:
 
         self.path_ax.clear()
         self.path_ax.plot(x, y, z, color='#0032A0', linewidth=1)
-        self.path_ax.set_xlabel('X')
-        self.path_ax.set_ylabel('Y')
-        self.path_ax.set_zlabel('Z')
+        self.path_ax.set_xlabel('X', labelpad=2)
+        self.path_ax.set_ylabel('Y', labelpad=2)
+        self.path_ax.set_zlabel('Z', labelpad=2)
         ticks = np.arange(-1.0, 1.5, 0.5)
         self.path_ax.set_xticks(ticks)
         self.path_ax.set_yticks(ticks)
         self.path_ax.set_zticks(ticks)
         self.path_ax.set_title("Acceleration Vector Path")
+        self.path_ax.legend([f"Distribution: {distribution_score}"])
+
         self.path_canvas.draw()
 
     def submit(self):
         try:
             if self.mode_var.get() == "Theoretical":
+                if not self.innerV_entry.get() or not self.outerV_entry.get() or not self.maxSeg_entry.get() or not self.startAnalysis_entry.get() or not self.endAnalysis_entry.get():
+                    raise ValueError("All input fields must be filled.")
+
                 innerV = float(self.innerV_entry.get())
                 outerV = float(self.outerV_entry.get())
                 maxSeg = float(self.maxSeg_entry.get())
@@ -309,6 +332,11 @@ class GUI:
                 disScore = analysis.getDistribution()
                 self.update_plot(analysis, magnitude, startAnalysis, endAnalysis, avgMagSeg, avgMagAnalysis, innerV, outerV, disScore, path_visualization)
             else:
+                if not self.startAnalysis_entry_exp.get() or not self.endAnalysis_entry_exp.get():
+                    raise ValueError("All input fields must be filled.")
+                if not hasattr(self, 'experimental_data') or not self.experimental_data:
+                    raise ValueError("Upload a CSV file.")
+
                 startAnalysis = float(self.startAnalysis_entry_exp.get())
                 endAnalysis = float(self.endAnalysis_entry_exp.get())
 
@@ -347,9 +375,9 @@ class GUI:
 
         self.path_ax.clear()
         self.path_ax.plot(analysis.x, analysis.y, analysis.z, color='#0032A0', linewidth=1)
-        self.path_ax.set_xlabel('X')
-        self.path_ax.set_ylabel('Y')
-        self.path_ax.set_zlabel('Z')
+        self.path_ax.set_xlabel('X', labelpad=2)
+        self.path_ax.set_ylabel('Y', labelpad=2)
+        self.path_ax.set_zlabel('Z', labelpad=2)
         ticks = np.arange(-1.0, 1.5, 0.5)
         self.path_ax.set_xticks(ticks)
         self.path_ax.set_yticks(ticks)
@@ -358,6 +386,9 @@ class GUI:
         self.path_ax.legend([f"Distribution: {disScore}"])
 
         self.path_canvas.draw()
+
+    def open_url(self, url):
+        webbrowser.open_new(url)
 
 if __name__ == "__main__":
     root = tk.Tk()
