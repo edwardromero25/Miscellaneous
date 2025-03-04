@@ -13,6 +13,9 @@ from datetime import datetime
 from PIL import Image, ImageTk
 import webbrowser
 import tkinter.ttk as ttk
+import os
+
+script_dir = os.path.abspath(os.path.dirname(__file__))
 
 class GUI:
     def __init__(self, master):
@@ -21,15 +24,18 @@ class GUI:
 
         self.create_custom_theme()
 
-        nasa_image = Image.open("images/NASA_logo.png")
+        nasa_image_path = os.path.join(script_dir, 'images', 'NASA_logo.png')
+        nasa_image = Image.open(nasa_image_path)
         nasa_image = nasa_image.resize((70, 58), Image.LANCZOS)
         self.nasa_logo = ImageTk.PhotoImage(nasa_image)
 
-        mssf_image = Image.open("images/MSSF_logo.png")
+        mssf_image_path = os.path.join(script_dir, 'images', 'MSSF_logo.png')
+        mssf_image = Image.open(mssf_image_path)
         mssf_image = mssf_image.resize((65, 58), Image.LANCZOS)
         self.mssf_logo = ImageTk.PhotoImage(mssf_image)
 
-        self.favicon = ImageTk.PhotoImage(file="images/favicon.ico")
+        favicon_path = os.path.join(script_dir, 'images', 'favicon.ico')
+        self.favicon = ImageTk.PhotoImage(file=favicon_path)
         master.iconphoto(False, self.favicon)
 
         font_style = ("Calibri", 12)
@@ -128,7 +134,7 @@ class GUI:
         self.endAnalysis_entry_exp = tk.Entry(analysis_period_frame_exp, font=font_style, width=10)
         self.endAnalysis_entry_exp.pack(side=tk.LEFT)
 
-        self.submit_button = tk.Button(center_frame, text="Start", command=self.submit, font=font_style, bg="#0032A0", fg="white")
+        self.submit_button = tk.Button(center_frame, text="Start", command=self.submit, font=font_style, bg="#E4002B", fg="white")
         self.submit_button.grid(row=1, column=0, columnspan=4, pady=(10, 5))
 
         self.accelerometer_frame = tk.Frame(center_frame, padx=1, pady=1)
@@ -201,15 +207,13 @@ class GUI:
         messagebox.showinfo("Welcome!", "This is a computer model that evaluates the efficacy of a 3D clinostat's microgravity simulation.")
 
     def create_custom_theme(self):
-        myred = "#E4002B"
         style = ttk.Style()
         style.theme_create("yummy", parent="alt", settings={
             "TNotebook": {"configure": {"tabmargins": [2, 0, 2, 0], "background": "SystemButtonFace"}},
             "TNotebook.Tab": {
                 "configure": {"padding": [5, 1], "background": "gainsboro"},
-                "map": {"background": [("selected", myred)],
-                        "expand": [("selected", [1, 1, 1, 0])],
-                        "foreground": [("selected", "white")]}
+                "map": {"background": [("selected", "SystemButtonFace")],
+                        "expand": [("selected", [1, 1, 1, 0])]}
             }
         })
         style.theme_use("yummy")
