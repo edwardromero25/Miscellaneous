@@ -21,7 +21,7 @@ script_dir = os.path.abspath(os.path.dirname(__file__))
 class GUI:
     def __init__(self, master):
         self.master = master
-        master.title("National Aerospace and Space Administration")
+        master.title("Microgravity Simulation Support Facility - NASA")
         master.configure(bg="#f1f1f1") 
 
         self.create_custom_theme()
