@@ -21,7 +21,7 @@ script_dir = os.path.abspath(os.path.dirname(__file__))
 class GUI:
     def __init__(self, master):
         self.master = master
-        master.title("Computer Model for Microgravity Simulators - NASA")
+        master.title("National Aerospace and Space Administration")
         master.configure(bg="#f1f1f1") 
 
         self.create_custom_theme()
@@ -155,7 +155,7 @@ class GUI:
 
         self.magnitude_frame = tk.Frame(notebook, borderwidth=1, relief=tk.SOLID)
         self.vector_components_frame = tk.Frame(notebook, borderwidth=1, relief=tk.SOLID)
-        self.path_frame = tk.Frame(notebook, borderwidth=1, relief=tk.SOLID)
+        self.path_frame = tk.Frame(notebook, borderwidth=0, relief=tk.SOLID)
 
         notebook.add(self.magnitude_frame, text="Resultant Vector")
         notebook.add(self.vector_components_frame, text="Vector Components")
