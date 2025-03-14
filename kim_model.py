@@ -21,7 +21,7 @@ class KimModel:
         self.delta_z = delta_z      # Δz
         self.duration_hours = duration_hours
         self.pi_over_30 = np.pi / 30  # Conversion factor from RPM to rad/s
-        self.g = np.array([[0], [-9.8], [0]])  # Shape: (3, 1)
+        self.g = np.array([[0], [0], [-9.8]])  # Shape: (3, 1)
 
     def rpm_to_rad_sec(self, rpm):
         """Convert RPM to radians per second."""
@@ -36,28 +36,28 @@ class KimModel:
         - ax, ay, az: Acceleration components in Local 2 frame (m/s²)
         """
         # Convert RPM to rad/s
-        outer_rad_sec = self.rpm_to_rad_sec(self.outer_rpm)  # θ₁̇ (outer frame)
-        inner_rad_sec = self.rpm_to_rad_sec(self.inner_rpm)  # θ₂̇ (inner frame)
+        inner_rad_sec = self.rpm_to_rad_sec(self.inner_rpm)  # θ₁ (inner frame)
+        outer_rad_sec = self.rpm_to_rad_sec(self.outer_rpm)  # θ₂ (outer frame)
 
         # Time array in seconds
         time_array = np.linspace(0, self.duration_hours * 3600, num=int(self.duration_hours * 3600))
 
         # Angles as function of time
-        theta_1 = outer_rad_sec * time_array  # θ₁ (outer frame angle)
-        theta_2 = inner_rad_sec * time_array  # θ₂ (inner frame angle)
+        theta_1 = inner_rad_sec * time_array  # θ₁ (inner frame angle)
+        theta_2 = outer_rad_sec * time_array  # θ₂ (outer frame angle)
 
         # Total angular velocity w = w₁ + w₂
         w = np.array([
-            outer_rad_sec * np.ones_like(time_array),          # w_x = θ₁̇
-            inner_rad_sec * np.cos(theta_1),                   # w_y = θ₂̇ cos(θ₁)
-            inner_rad_sec * np.sin(theta_1)                    # w_z = θ₂̇ sin(θ₁)
+            inner_rad_sec * np.ones_like(time_array),          # w_x = θ₁̇
+            outer_rad_sec * np.cos(theta_1),                   # w_y = θ₂̇ cos(θ₁)
+            outer_rad_sec * np.sin(theta_1)                    # w_z = θ₂̇ sin(θ₁)
         ])  # Shape: (3, len(time_array))
 
         # Angular acceleration (derivative of w)
         w_dot = np.array([
             np.zeros_like(time_array),                         # ẇ_x = 0 (constant θ₁̇)
-            -outer_rad_sec * inner_rad_sec * np.sin(theta_1),  # ẇ_y = -θ₁̇ θ₂̇ sin(θ₁)
-            outer_rad_sec * inner_rad_sec * np.cos(theta_1)    # ẇ_z = θ₁̇ θ₂̇ cos(θ₁)
+            -inner_rad_sec * outer_rad_sec * np.sin(theta_1),  # ẇ_y = -θ₁̇ θ₂̇ sin(θ₁)
+            inner_rad_sec * outer_rad_sec * np.cos(theta_1)    # ẇ_z = θ₁̇ θ₂̇ cos(θ₁)
         ])  # Shape: (3, len(time_array))
 
         # Position in global frame
@@ -103,6 +103,16 @@ def plot_kim_results(time_array, g_prime, a_prime, a_tot_prime):
     g_y_avg = np.cumsum(g_prime[1]) / np.arange(1, len(g_prime[1]) + 1)
     g_z_avg = np.cumsum(g_prime[2]) / np.arange(1, len(g_prime[2]) + 1)
     g_magnitude_avg = np.sqrt(g_x_avg**2 + g_y_avg**2 + g_z_avg**2)
+
+    # Time-averaged non-gravitational acceleration
+    plt.figure()
+    plt.plot(time_hours, g_magnitude_avg, color='blue')
+    plt.title("Time-Averaged Gravitational Acceleration")
+    plt.xlim(left=0, right=time_hours[-1])
+    plt.ylim(bottom=0)
+    plt.xlabel("Time (h)")
+    plt.ylabel("Acceleration (m/s²)")
+    plt.show()
 
     plt.figure()
     plt.plot(time_hours, g_x_avg, label="X", color='red')
